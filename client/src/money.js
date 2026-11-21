@@ -1,7 +1,9 @@
-// Change the currency here; amounts are stored as integer cents everywhere else.
-export const CURRENCY = 'USD'
+// The app is CAD only, formatted Canadian style for every visitor: $1,234.50 and Nov. 21, 2026.
+// Amounts are stored as integer cents everywhere else.
+export const CURRENCY = 'CAD'
+export const LOCALE = 'en-CA'
 
-const formatter = new Intl.NumberFormat(undefined, { style: 'currency', currency: CURRENCY })
+const formatter = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: CURRENCY })
 
 export const formatCents = (cents) => formatter.format(cents / 100)
 
@@ -27,9 +29,15 @@ export const currentMonth = () => todayLocal().slice(0, 7)
 
 export function formatDate(isoDate) {
   const [y, m, d] = isoDate.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+  return new Date(y, m - 1, d).toLocaleDateString(LOCALE, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   })
+}
+
+// "2026-11" becomes "November 2026".
+export function formatMonth(yearMonth) {
+  const [y, m] = yearMonth.split('-').map(Number)
+  return new Date(y, m - 1, 1).toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' })
 }

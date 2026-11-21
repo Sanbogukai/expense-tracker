@@ -333,3 +333,137 @@ button:disabled {
 .muted {
   color: var(--muted);
 }
+
+/* Inline delete confirm */
+
+.confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.confirm button {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.confirm .yes {
+  border: 1px solid var(--danger);
+  background: var(--danger);
+  color: #fff;
+}
+
+.confirm .no {
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+}
+
+/* Empty state */
+
+.empty {
+  margin-top: 16px;
+  padding: 28px 12px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.empty p {
+  margin: 0;
+}
+
+.empty-title {
+  font-weight: 600;
+  margin-bottom: 4px !important;
+}
+
+.empty .link {
+  padding: 0;
+}
+
+/* Phone: one column, ordered totals, form, filters, list. The results panel steps aside
+   (display: contents) so its children can be placed around the form. */
+
+@media (max-width: 720px) {
+  .app {
+    padding: 16px 12px 40px;
+  }
+
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* the desktop grid's align-items: start would shrink each section to its content */
+    gap: 16px;
+  }
+
+  .results {
+    display: contents;
+  }
+
+  .summary {
+    order: 1;
+  }
+
+  .form {
+    order: 2;
+  }
+
+  .filters {
+    order: 3;
+    margin-bottom: 0;
+  }
+
+  .results > .form-error {
+    order: 4;
+    margin: 0;
+  }
+
+  .results-list {
+    order: 5;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0 16px;
+  }
+
+  .results-list .list {
+    margin: 0;
+  }
+
+  .results-list .list li:first-child,
+  .results-list .empty {
+    border-top: 0;
+    margin-top: 0;
+  }
+
+  .results-list > .muted {
+    padding: 12px 0;
+    margin: 0;
+  }
+
+  .cards {
+    gap: 8px;
+  }
+
+  .card {
+    padding: 10px;
+    background: var(--panel);
+  }
+
+  .card .value {
+    font-size: 1.05rem;
+  }
+
+  .filters label {
+    flex: 1 1 140px;
+  }
+
+  .list li {
+    gap: 8px;
+  }
+}

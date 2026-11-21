@@ -1,10 +1,41 @@
 import { useEffect, useState } from 'react'
 import * as api from './api.js'
-import { currentMonth } from './money.js'
+import { currentMonth, formatMonth } from './money.js'
 import Filters from './components/Filters.jsx'
 import SummaryCards from './components/SummaryCards.jsx'
 import TransactionForm from './components/TransactionForm.jsx'
 import TransactionList from './components/TransactionList.jsx'
+
+// Says what is empty for the current filters, and how to fill it.
+function EmptyState({ filters, onClear }) {
+  const what = filters.category ? `${filters.category} transactions` : 'transactions'
+  const when = filters.month ? ` in ${formatMonth(filters.month)}` : ''
+  const filtered = Boolean(filters.category || filters.month)
+
+  return (
+    <div className="empty">
+      <p className="empty-title">
+        No {what}
+        {when}
+        {filtered ? '.' : ' yet.'}
+      </p>
+      <p className="muted">
+        Add one with the form
+        {filtered ? (
+          <>
+            , or{' '}
+            <button type="button" className="link" onClick={onClear}>
+              clear the filters
+            </button>
+            .
+          </>
+        ) : (
+          '.'
+        )}
+      </p>
+    </div>
+  )
+}
 
 export default function App() {
   const [categories, setCategories] = useState([])
@@ -71,7 +102,8 @@ export default function App() {
       <main>
         <TransactionForm categories={categories} onAdd={handleAdd} />
 
-        <section className="panel">
+        {/* On a phone this panel's children are re-ordered as page sections (see index.css). */}
+        <section className="panel results">
           <Filters categories={categories} filters={filters} onChange={setFilters} />
           {error && (
             <p className="form-error" role="alert">
@@ -82,11 +114,17 @@ export default function App() {
             </p>
           )}
           <SummaryCards summary={summary} />
-          {loading && !transactions.length ? (
-            <p className="muted">Loading…</p>
-          ) : (
-            <TransactionList transactions={transactions} onDelete={handleDelete} deletingId={deletingId} />
-          )}
+          <div className="results-list">
+            {loading && !transactions.length ? (
+              <p className="muted">Loading…</p>
+            ) : transactions.length ? (
+              <TransactionList transactions={transactions} onDelete={handleDelete} deletingId={deletingId} />
+            ) : (
+              !error && (
+                <EmptyState filters={filters} onClear={() => setFilters({ category: '', month: '' })} />
+              )
+            )}
+          </div>
         </section>
       </main>
     </div>
