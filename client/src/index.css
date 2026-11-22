@@ -1,30 +1,55 @@
+/* All the app's styles. Colours live in variables at the top, so light and dark themes
+   only swap the variables and every rule below follows. */
+
+/* :root is the <html> element; variables set here are visible to every element. */
 :root {
+  /* Page background. */
   --bg: #f6f7f9;
+  /* Background of the white boxes (panels, inputs). */
   --panel: #ffffff;
+  /* Main text colour. */
   --text: #1c1f24;
+  /* Grey for secondary text: labels, dates, hints. */
   --muted: #6a7280;
+  /* Thin lines around boxes and between rows. */
   --border: #e3e6ea;
+  /* Blue for buttons, links and focus outlines. */
   --accent: #2f5bea;
+  /* Green for income. */
   --income: #12805c;
+  /* Orange for expenses. */
   --expense: #c2410c;
+  /* Red for errors, deletes and a negative balance. */
   --danger: #b42318;
+  /* Corner rounding for the big boxes. */
   --radius: 10px;
 
+  /* Tells the browser the page supports both themes, so its own controls (date pickers,
+     scrollbars) match too. */
   color-scheme: light dark;
+  /* Each system's own interface font, so it loads instantly with no download. */
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* The base size every rem value is measured from. */
   font-size: 16px;
+  /* Space between lines of text, as a multiple of the font size. */
   line-height: 1.45;
+  /* Applies the colours chosen above. */
   color: var(--text);
   background: var(--bg);
 }
 
+/* Dark theme: used when the visitor's system is set to dark mode. Only the colours change. */
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Near-black page. */
     --bg: #14161a;
+    /* Panels a little lighter than the page, so they stand out. */
     --panel: #1d2026;
+    /* Light text. */
     --text: #e8eaee;
     --muted: #9aa3b2;
     --border: #2e333b;
+    /* Brighter versions of the accent colours, readable on a dark background. */
     --accent: #7c9bff;
     --income: #4cc59a;
     --expense: #f5935a;
@@ -32,45 +57,60 @@
   }
 }
 
+/* Every element: width and height include padding and border, which makes sizes predictable. */
 * {
   box-sizing: border-box;
 }
 
+/* Removes the browser's default 8px gap around the page. */
 body {
   margin: 0;
 }
 
+/* Both heading levels: no default spacing, and tighter lines than body text. */
 h1,
 h2 {
   margin: 0;
   line-height: 1.2;
 }
 
+/* The page title. 1.5rem is 1.5 times the 16px base, so 24px. */
 h1 {
   font-size: 1.5rem;
 }
 
+/* The form's "Add transaction" heading. */
 h2 {
   font-size: 1.05rem;
 }
 
+/* The outer wrapper. */
 .app {
+  /* Stops the layout getting too wide on big screens. */
   max-width: 1040px;
+  /* Centres it: auto left and right margins split the leftover space. */
   margin: 0 auto;
+  /* Space inside: top, sides, bottom. */
   padding: 24px 16px 48px;
 }
 
+/* Space under the page title. */
 header {
   margin-bottom: 20px;
 }
 
+/* The desktop layout: two columns side by side. */
 main {
   display: grid;
+  /* Form column between 260 and 320px wide; the results take all the rest (1fr). */
   grid-template-columns: minmax(260px, 320px) 1fr;
+  /* Space between the columns. */
   gap: 20px;
+  /* Each column is only as tall as its content, rather than stretched to match the other. */
   align-items: start;
 }
 
+/* A boxed section: the form and the results. */
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -80,107 +120,142 @@ main {
 
 /* Form */
 
+/* Stacks the form's fields top to bottom with even space between them. */
 .form {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
+/* Every label: the text sits above its control. */
 label {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* Label text is a little smaller and grey, so the inputs stand out. */
   font-size: 0.875rem;
   color: var(--muted);
 }
 
+/* Form controls do not inherit the page font by default; this makes them match. */
 input,
 select,
 button {
   font: inherit;
 }
 
+/* Text boxes and dropdowns. */
 input,
 select {
+  /* Room inside: top/bottom, left/right. */
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
+  /* Uses the theme colours instead of the browser's white box. */
   background: var(--panel);
   color: var(--text);
 }
 
+/* A visible blue ring on whatever has keyboard focus. :focus-visible shows it for keyboard
+   use but not for mouse clicks. */
 input:focus-visible,
 select:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--accent);
+  /* A 1px gap between the control and its ring. */
   outline-offset: 1px;
 }
 
+/* Any field the form has marked as invalid (aria-invalid="true") gets a red border. */
 [aria-invalid='true'] {
   border-color: var(--danger);
 }
 
+/* The small "(optional)" after "Note". */
 .optional {
   font-size: 0.8rem;
 }
 
+/* Error text: under one field, or for the whole form. */
 .field-error,
 .form-error {
   color: var(--danger);
   font-size: 0.8rem;
 }
 
+/* The whole-form error is a paragraph: no space above, some below. */
 .form-error {
   margin: 0 0 12px;
 }
 
+/* The blue "Add" button. */
 button[type='submit'] {
   padding: 10px;
+  /* No border; the background colour is enough. */
   border: 0;
   border-radius: 8px;
   background: var(--accent);
+  /* White text on blue in both themes. */
   color: #fff;
   font-weight: 600;
+  /* The hand cursor that says "clickable". */
   cursor: pointer;
 }
 
+/* Any button that cannot be pressed right now (saving, deleting) looks faded. */
 button:disabled {
   opacity: 0.6;
+  /* The normal arrow, since clicking does nothing. */
   cursor: default;
 }
 
+/* The Expense / Income switch: two equal halves inside one rounded border. */
 .type-toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border: 1px solid var(--border);
   border-radius: 8px;
+  /* Clips the coloured half to the rounded corners. */
   overflow: hidden;
 }
 
+/* Each half of the switch. */
 .type-toggle label {
+  /* Undoes the stacked label style above: text in a row, centred. */
   flex-direction: row;
   justify-content: center;
   padding: 8px;
+  /* The whole half is clickable. */
   cursor: pointer;
+  /* Full-strength text, not the grey label colour. */
   color: var(--text);
 }
 
+/* Hides the real radio circles. They stay in the page (not display: none), so the keyboard
+   and screen readers can still use them. */
 .type-toggle input {
+  /* Takes it out of the layout so it does not push the text. */
   position: absolute;
+  /* Invisible. */
   opacity: 0;
+  /* Clicks pass through to the label. */
   pointer-events: none;
 }
 
+/* With the radio hidden, its focus ring is drawn on the label that contains it instead. */
 .type-toggle label:has(input:focus-visible) {
   outline: 2px solid var(--accent);
+  /* A negative offset draws the ring inside, so the clipping above does not cut it off. */
   outline-offset: -2px;
 }
 
+/* The chosen half: orange for Expense. */
 .type-toggle .on.expense {
   background: var(--expense);
   color: #fff;
 }
 
+/* The chosen half: green for Income. */
 .type-toggle .on.income {
   background: var(--income);
   color: #fff;
@@ -188,17 +263,22 @@ button:disabled {
 
 /* Filters */
 
+/* Category, month and "All time" in a row that wraps onto a new line when narrow. */
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  /* Lines the items up along their bottom edges, so the button sits level with the inputs. */
   align-items: flex-end;
   margin-bottom: 16px;
 }
 
+/* A button made to look like a text link ("All time", "Retry", "clear the filters"). */
 .link {
+  /* Removes the button look. */
   border: 0;
   background: none;
+  /* Same height as the inputs beside it, so it lines up. */
   padding: 8px 0;
   color: var(--accent);
   cursor: pointer;
@@ -207,12 +287,15 @@ button:disabled {
 
 /* Summary */
 
+/* The three totals cards in three equal columns. */
 .cards {
   display: grid;
+  /* repeat(3, 1fr) is shorthand for 1fr 1fr 1fr. */
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
+/* One card: label stacked over value. */
 .card {
   display: flex;
   flex-direction: column;
@@ -221,45 +304,58 @@ button:disabled {
   border-radius: 8px;
 }
 
+/* The small grey "Income" / "Expenses" / "Balance". */
 .card .label {
   font-size: 0.8rem;
   color: var(--muted);
 }
 
+/* The big number on each card. */
 .card .value {
   font-size: 1.25rem;
   font-weight: 650;
+  /* Every digit the same width, so amounts do not jiggle as they change. */
   font-variant-numeric: tabular-nums;
 }
 
+/* Income total in green. */
 .card.income .value {
   color: var(--income);
 }
 
+/* Expense total in orange. */
 .card.expense .value {
   color: var(--expense);
 }
 
+/* Balance in red only when it is below zero (the "negative" class SummaryCards adds). */
 .card.balance.negative .value {
   color: var(--danger);
 }
 
+/* The per-category spending line under the cards. */
 .breakdown {
+  /* No bullet points. */
   list-style: none;
+  /* Space above only; no default indent. */
   margin: 10px 0 0;
   padding: 0;
+  /* Items flow left to right and wrap. */
   display: flex;
   flex-wrap: wrap;
+  /* 6px between lines, 16px between items. */
   gap: 6px 16px;
   font-size: 0.85rem;
   color: var(--muted);
 }
 
+/* Category name and its total side by side. */
 .breakdown li {
   display: flex;
   gap: 6px;
 }
 
+/* The total (the last span) in full-strength text, with even-width digits. */
 .breakdown li span:last-child {
   color: var(--text);
   font-variant-numeric: tabular-nums;
@@ -267,53 +363,67 @@ button:disabled {
 
 /* List */
 
+/* The transaction list: no bullets or indent, some space above. */
 .list {
   list-style: none;
   margin: 16px 0 0;
   padding: 0;
 }
 
+/* One row: info takes the spare width (1fr); amount and button take only what they need. */
 .list li {
   display: grid;
   grid-template-columns: 1fr auto auto;
   gap: 12px;
+  /* Centres the three parts vertically. */
   align-items: center;
   padding: 10px 0;
+  /* A line between rows. */
   border-top: 1px solid var(--border);
 }
 
+/* Category stacked over date and note. */
 .info {
   display: flex;
   flex-direction: column;
+  /* Lets this column shrink below its text width, so a long note can be cut off with "…". */
   min-width: 0;
 }
 
+/* The category name in bold. */
 .category {
   font-weight: 600;
 }
 
+/* Date and note: small, grey, and on one line. */
 .meta {
   font-size: 0.8rem;
   color: var(--muted);
+  /* These three together cut long text off with "…" instead of wrapping. */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* The amount on each row. */
 .amount {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
+/* Income amounts in green. */
 .amount.income {
   color: var(--income);
 }
 
+/* Expense amounts in orange. */
 .amount.expense {
   color: var(--expense);
 }
 
+/* The square × button. */
 .delete {
+  /* A fixed 32px square, big enough to tap. */
   width: 32px;
   height: 32px;
   border: 1px solid var(--border);
@@ -321,21 +431,25 @@ button:disabled {
   background: none;
   color: var(--muted);
   font-size: 1.1rem;
+  /* Keeps the × centred vertically in the square. */
   line-height: 1;
   cursor: pointer;
 }
 
+/* Turns red on mouse-over, as a warning, unless the button is disabled. */
 .delete:hover:not(:disabled) {
   color: var(--danger);
   border-color: var(--danger);
 }
 
+/* Grey secondary text ("Loading…", hints). */
 .muted {
   color: var(--muted);
 }
 
 /* Inline delete confirm */
 
+/* "Delete?  Yes  No" in a row, in place of the × button. */
 .confirm {
   display: flex;
   align-items: center;
@@ -344,6 +458,7 @@ button:disabled {
   color: var(--muted);
 }
 
+/* Yes and No: same height as the × button, so the row does not jump. */
 .confirm button {
   height: 32px;
   padding: 0 10px;
@@ -352,12 +467,14 @@ button:disabled {
   cursor: pointer;
 }
 
+/* "Yes" in solid red, because it deletes. */
 .confirm .yes {
   border: 1px solid var(--danger);
   background: var(--danger);
   color: #fff;
 }
 
+/* "No" plain, as the safe choice. */
 .confirm .no {
   border: 1px solid var(--border);
   background: none;
@@ -366,6 +483,7 @@ button:disabled {
 
 /* Empty state */
 
+/* The "No transactions" box: centred text with a line above, like a list row. */
 .empty {
   margin-top: 16px;
   padding: 28px 12px;
@@ -373,15 +491,19 @@ button:disabled {
   text-align: center;
 }
 
+/* Removes the default paragraph spacing inside it. */
 .empty p {
   margin: 0;
 }
 
+/* The bold first line. */
 .empty-title {
   font-weight: 600;
+  /* !important wins over the margin: 0 just above, which is otherwise more specific. */
   margin-bottom: 4px !important;
 }
 
+/* The "clear the filters" link sits inside a sentence, so it needs no padding. */
 .empty .link {
   padding: 0;
 }
@@ -389,11 +511,14 @@ button:disabled {
 /* Phone: one column, ordered totals, form, filters, list. The results panel steps aside
    (display: contents) so its children can be placed around the form. */
 
+/* Everything in here applies only when the window is 720px wide or less. */
 @media (max-width: 720px) {
+  /* Less space around the edges on a small screen. */
   .app {
     padding: 16px 12px 40px;
   }
 
+  /* One column instead of the desktop grid. Flex is used because it supports `order`. */
   main {
     display: flex;
     flex-direction: column;
@@ -401,68 +526,86 @@ button:disabled {
     gap: 16px;
   }
 
+  /* The results panel's box disappears and its children act as direct children of main,
+     so they can be ordered alongside the form. */
   .results {
     display: contents;
   }
 
+  /* Totals first, so the numbers are the first thing seen. */
   .summary {
     order: 1;
   }
 
+  /* Then the form. */
   .form {
     order: 2;
   }
 
+  /* Then the filters, right above the list they affect. */
   .filters {
     order: 3;
+    /* main's gap already spaces it. */
     margin-bottom: 0;
   }
 
+  /* A loading error (a direct child of .results, not the form's own) goes just above the list. */
   .results > .form-error {
     order: 4;
     margin: 0;
   }
 
+  /* The list last, in its own box, since the results panel box is gone. */
   .results-list {
     order: 5;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    /* Side padding only; the rows bring their own top and bottom padding. */
     padding: 0 16px;
   }
 
+  /* The box above already gives the spacing, so the list needs no top margin. */
   .results-list .list {
     margin: 0;
   }
 
+  /* The first row and the empty state would otherwise draw a line right under the box's
+     own top border. */
   .results-list .list li:first-child,
   .results-list .empty {
     border-top: 0;
     margin-top: 0;
   }
 
+  /* "Loading…" gets the same spacing as a row. */
   .results-list > .muted {
     padding: 12px 0;
     margin: 0;
   }
 
+  /* Tighter space between the cards. */
   .cards {
     gap: 8px;
   }
 
+  /* The cards now sit on the page background, so they get their own panel colour. */
   .card {
     padding: 10px;
     background: var(--panel);
   }
 
+  /* Smaller numbers, so three cards fit across a phone. */
   .card .value {
     font-size: 1.05rem;
   }
 
+  /* Category and month share the row and grow to fill it, each at least 140px wide. */
   .filters label {
     flex: 1 1 140px;
   }
 
+  /* Tighter space inside each row. */
   .list li {
     gap: 8px;
   }
