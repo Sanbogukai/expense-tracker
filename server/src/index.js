@@ -1,70 +1,61 @@
-// The server's entry point: builds the Express app, wires up the routes and starts listening.
+// The server's entry point: opens the database, builds the app and starts listening.
 
 // existsSync checks whether a file or folder is there, without throwing if it is not.
 import { existsSync } from 'node:fs';
 // Converts a file:// URL into a normal path.
 import { fileURLToPath } from 'node:url';
-// Express handles HTTP: routing, JSON parsing, static files.
-import express from 'express';
-// All /api routes, from routes.js.
-import router from './routes.js';
-// The sample rows and the helper that loads them into an empty table.
-import { rows, seedIfEmpty } from './sampleData.js';
+// Builds the Express app with every route attached.
+import { createApp } from './app.js';
+// Opens the SQLite file and creates any missing tables.
+import { openDatabase } from './db.js';
+// The daily clean-up of owners nobody has used for 30 days.
+import { DAY_MS, ownerStore } from './owners.js';
 
-// Creates the app that every middleware and route below is attached to.
-const app = express();
-// Render (and other hosts) tell the app which port to use through PORT; 3000 is the local default.
-// Number() turns the text "10000" into the number 10000; `||` falls back when it is missing.
-const PORT = Number(process.env.PORT) || 3000;
+// Render (and other hosts) choose the port through PORT; 3000 is the local default.
+const DEFAULT_PORT = 3000;
+// Number() turns the text "10000" into 10000; `||` falls back when PORT is missing.
+const PORT = Number(process.env.PORT) || DEFAULT_PORT;
 
-// The built React app. It exists after `npm run build` in client/, which is how production runs;
-// in development Vite serves the client instead and this folder may be missing.
-const CLIENT_DIST = fileURLToPath(new URL('../../client/dist', import.meta.url));
+// The database file: DB_PATH when set, otherwise expenses.db next to src/.
+const dbPath = process.env.DB_PATH ?? fileURLToPath(new URL('../expenses.db', import.meta.url));
+// One connection, shared by the app and the clean-up.
+const db = openDatabase(dbPath);
 
-// With SEED_IF_EMPTY=1 (set on Render), an empty table gets the sample data on start-up.
-// seedIfEmpty() returns true only when it actually seeded, so the message is printed only then.
-if (process.env.SEED_IF_EMPTY === '1' && seedIfEmpty()) {
-  // Shows up in the Render log, as a sign the wiped disk was refilled.
-  console.log(`Empty database: seeded ${rows.length} sample transactions.`);
+// The built React app. It exists after `npm run build` in client/, which is how production
+// runs; in development Vite serves the client instead and this folder is usually missing.
+const builtClient = fileURLToPath(new URL('../../client/dist', import.meta.url));
+// Passed on only when it is there.
+const clientDir = existsSync(builtClient) ? builtClient : undefined;
+
+// The app over that database, with the real clock (the default), and the client when built.
+const app = createApp({ db, clientDir });
+
+// The owner queries, for the clean-up below.
+const owners = ownerStore(db);
+
+// Removes stale owners and logs how many. A failure is logged and the server keeps running;
+// the next day's run tries again.
+function cleanUp() {
+  try {
+    // Owners unseen for 30 days go, with their transactions.
+    const count = owners.deleteStaleOwners(new Date());
+    // Shows up in the Render log.
+    console.log(`Removed ${count} owner(s) unseen for 30 days`);
+  } catch (err) {
+    // Logged for debugging only.
+    console.error('Clean-up failed', err);
+  }
 }
+// Once at start-up, then daily. unref() lets the process exit without waiting for the timer.
+cleanUp();
+setInterval(cleanUp, DAY_MS).unref();
 
-// Middleware runs on every request, top to bottom, in the order it is added.
-
-// Parses JSON request bodies into req.body. The 10kb cap refuses oversized bodies.
-app.use(express.json({ limit: '10kb' }));
-// Every route in routes.js now answers under /api, e.g. /api/transactions.
-app.use('/api', router);
-
-// Unknown API routes get JSON, not Express's HTML page.
-// It only runs when no route above matched, because a matching route ends the request.
-app.use('/api', (req, res) => {
-  // 404 "not found", naming the method and path that had no route.
-  res.status(404).json({ error: `No route for ${req.method} ${req.originalUrl}` });
-});
-
-// Only when the client has been built (production).
-if (existsSync(CLIENT_DIST)) {
-  // Serves index.html, the JS bundle and other files from client/dist as they are.
-  app.use(express.static(CLIENT_DIST));
-  // Any other GET is a page route of the single-page app, so it gets index.html.
-  // '/{*splat}' is Express 5's "match everything" pattern (Express 4 used '*').
-  app.get('/{*splat}', (req, res) => res.sendFile('index.html', { root: CLIENT_DIST }));
-}
-
-// Errors always come back as JSON. Bad JSON bodies arrive here with status 400.
-// Express knows this is the error handler because it takes four arguments (err first).
-// `next` is unused, but it must be listed for Express to see four arguments.
-app.use((err, req, res, next) => {
-  // Use the error's own status when it has one (e.g. 400 for bad JSON), otherwise 500.
-  const status = err.status ?? err.statusCode ?? 500;
-  // Server faults are logged for debugging; client mistakes (4xx) are not.
-  if (status >= 500) console.error(err);
-  // A 500 never shows its internal message to the visitor; a 4xx explains what was wrong.
-  res.status(status).json({ error: status >= 500 ? 'Something went wrong' : err.message });
-});
-
-// Starts the HTTP server on PORT; the callback runs once it is ready.
-app.listen(PORT, () => {
+// Starts the HTTP server on PORT. Express 5 hands a failure (such as the port already being
+// in use) to the callback instead of throwing, so the callback checks for one and stops the
+// process rather than claiming to be listening.
+app.listen(PORT, (error) => {
+  // Port taken or similar: stop with the error.
+  if (error) throw error;
   // Confirms the server is up and where.
   console.log(`Listening on http://localhost:${PORT}`);
 });

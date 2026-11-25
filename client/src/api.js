@@ -2,19 +2,80 @@
 // with the server's per-field issues attached when validation failed.
 // This is the only file that talks to the server; components call these functions instead.
 
+// Each browser has its own private list on the server, found by a random key kept here in
+// localStorage and sent in this header. The server forgets a key when its owner goes unused
+// for 30 days, or when Render wipes the disk on a restart; a 401 answer then gets a new key
+// (with the sample rows again) and the request is sent once more.
+const OWNER_HEADER = 'X-Owner-Key'
+const STORAGE_KEY = 'expense-tracker.owner-key'
+// 204: success with no body. 401: the key is missing or the server does not know it.
+const HTTP_NO_CONTENT = 204
+const HTTP_UNAUTHORIZED = 401
+
+// The key in use, and the owner request in flight if there is one. The page asks for the list
+// and the summary at once; sharing one pending request makes one owner, not two.
+const owner = { key: localStorage.getItem(STORAGE_KEY), pending: null }
+
+// Asks the server for a new owner, keeps its key and returns it.
+async function requestOwner() {
+  try {
+    // A new owner with the sample rows.
+    const res = await fetch('/api/owners', { method: 'POST' })
+    // 429 (too many new lists from this address) or a server fault.
+    if (!res.ok) throw new Error(`Could not start a new list (${res.status})`)
+    // The answer is { key }.
+    const { key } = await res.json()
+    // Kept for the next visit.
+    localStorage.setItem(STORAGE_KEY, key)
+    // And for the next request.
+    owner.key = key
+    return key
+  } finally {
+    // Settled either way, so a later call can try again.
+    owner.pending = null
+  }
+}
+
+// A new owner, shared by everyone who asks while it is on its way.
+function newOwner() {
+  // Starts a request only when none is running.
+  owner.pending ??= requestOwner()
+  return owner.pending
+}
+
+// The key to retry with after `stale` got a 401. If another request has already replaced it,
+// that key is used instead of making yet another owner.
+function replaceKey(stale) {
+  return owner.key !== null && owner.key !== stale ? Promise.resolve(owner.key) : newOwner()
+}
+
+// Sends one request with the key, getting a key first when there is none.
+async function send(path, options, key) {
+  // Relative URL: in development Vite forwards /api to the server on port 3000 (vite.config.js);
+  // in production the same Express server serves both the page and /api.
+  return fetch(`/api${path}`, {
+    // Copies in method, body and anything else the caller passed.
+    ...options,
+    headers: {
+      // Only requests with a body (POST) say they are sending JSON.
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      // The owner key on every request.
+      [OWNER_HEADER]: key,
+    },
+  })
+}
+
 // Sends one request to /api + path and returns the parsed JSON body.
 // options is passed through to fetch (method, body, ...); it defaults to an empty object.
 async function request(path, options = {}) {
-  // Relative URL: in development Vite forwards /api to the server on port 3000 (vite.config.js);
-  // in production the same Express server serves both the page and /api.
-  const res = await fetch(`/api${path}`, {
-    // Only requests with a body (POST) say they are sending JSON.
-    headers: options.body ? { 'Content-Type': 'application/json' } : undefined,
-    // Copies in method, body and anything else the caller passed.
-    ...options,
-  })
+  // The stored key, or a new owner's.
+  const key = owner.key ?? (await newOwner())
+  // First try.
+  const first = await send(path, options, key)
+  // Once only: a second 401 with a brand-new key is treated as an ordinary error below.
+  const res = first.status === HTTP_UNAUTHORIZED ? await send(path, options, await replaceKey(key)) : first
   // 204 "No Content" (a successful delete) has no body to read.
-  if (res.status === 204) return null
+  if (res.status === HTTP_NO_CONTENT) return null
 
   // Reads the JSON body; if the body is not JSON at all, use null instead of crashing.
   const body = await res.json().catch(() => null)
